@@ -22,13 +22,14 @@ char flag;
 ISR(TIMER1_COMPA_vect){//alterna laser de 1 em 1 segundo
 	if(flag == 1){
 		ALTERNA_BIT(PORTB, PB4);
-		ADCSRA |= (1<<ADSC);
+	}else{
+		LIMPA_BIT(PORTB, PB4);
 	}
 }
 ISR(ADC_vect){
 	adcValue = ADC;
 	Serial.println(adcValue);
- 	if(adcValue >= 700){
+	if(adcValue >= 800){
 		dano();
 	}
 }
@@ -40,14 +41,14 @@ void desliga(){//desliga o robô após ser atingido 3 vezes
 }
 void giro(){//faz o robô girar 180 graus ao ser atingido e desativa por 5s antes que possa ser utilizado
 	PORTB &= ~0x06;//desliga as rodas da esquerda
+	PORTD &= ~0x40;//desliga o bit PD6
 	PORTD |= _BV(PD7);//Gira pra direita
-	_delay_ms(1000);//delay para tempo do giro
-	PORTD &= ~0xC0;//Cancela o giro
-	_delay_ms(5000);//delay de 5s para voltar
+	_delay_ms(1000);
+	PORTD &= 0x0C;//cancela o giro
+	_delay_ms(4000);
 	sei();//ativa as interrupções globais
 }
 void dano(){//Apaga um ods leds de vida sempre que for acertado no LDR
-	LIMPA_BIT(ADCSRA, ADIE);
 	flag = 0;//desabilita a flag de ativação do circuito
 	danoRecebido++;//incrementa a variável de dano recebido
 	char vidasAtuais = vidasTotais - danoRecebido;//cria a variavel local para vidas atuais
@@ -133,7 +134,11 @@ void enableB_PWM(){
 	TCCR2B = 0;
 	TCCR2B |= _BV(CS20);
 }
-
+void leituraADC(){
+	ADCSRA |= _BV(ADSC);
+	while(!(ADCSRA & _BV(ADIF)));
+	ADCSRA |= _BV(ADIF);
+}
 int main(void){
 	//	    	 D12
 	DDRB |= _BV(PB4);//define o led atirador como saída
@@ -159,6 +164,7 @@ int main(void){
 	
 	while(1){
 		while(flag == 1){
+			leituraADC();
 			if(!(PINC & _BV(PC4))){
 				acelera();
 			}
