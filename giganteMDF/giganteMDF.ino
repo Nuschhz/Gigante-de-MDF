@@ -29,12 +29,10 @@ ISR(TIMER1_COMPA_vect){//alterna laser de 1 em 1 segundo
 ISR(ADC_vect){
 	adcValue = ADC;
 	Serial.println(adcValue);
-	if(adcValue >= 800){
-		dano();
-	}
 }
 void desliga(){//desliga o robô após ser atingido 3 vezes
 	cli();//desabilita interrupções globais
+	adcValue = 0;
 	PORTB |= 0;//desliga as portas no PORTB
 	PORTD |= 0;//desliga as portas no PORTD
 	flag = 0;//desabilita a flag de funcionamento
@@ -65,17 +63,19 @@ void dano(){//Apaga um ods leds de vida sempre que for acertado no LDR
 	}else if(vidasAtuais >= 0){
 		ALTERNA_BIT(PORTD,PD2);
 		LIMPA_BIT(PORTB, PB4);
-		desliga();
 	}
 }
 void acelera(){
 	while(!(PINC & _BV(PC2))){//curva esquerda
+		leituraADC();
 		PORTB |= _BV(PB2) ;
 	}
 	while(!(PINC & _BV(PC3))){//curva direita
+		leituraADC();
 		PORTD |= _BV(PD6);
 	}
 	while(LINHA_RETA_AC){//linha reta
+		leituraADC();
 		PORTB |= _BV(PB2);
 		PORTD |= _BV(PD6);
 	}
@@ -84,12 +84,15 @@ void acelera(){
 }
 void re(){
 	while(!(PINC & _BV(PC2))){//curva esquerda
+		leituraADC();
 		PORTB |= _BV(PB1);
 	}
 	while(!(PINC & _BV(PC3))){//curva direita
+		leituraADC();
 		PORTD |= _BV(PD7);
 	}
 	while(LINHA_RETA_RE){//linha reta
+		leituraADC();
 		PORTB |= _BV(PB1);
 		PORTD |= _BV(PD7);
 	}
@@ -138,6 +141,9 @@ void leituraADC(){
 	ADCSRA |= _BV(ADSC);
 	while(!(ADCSRA & _BV(ADIF)));
 	ADCSRA |= _BV(ADIF);
+	if(adcValue >= 800){
+		dano();
+	}
 }
 int main(void){
 	//	    	 D12
