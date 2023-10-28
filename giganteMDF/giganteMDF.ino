@@ -22,13 +22,13 @@ char flag;
 ISR(TIMER1_COMPA_vect){//alterna laser de 1 em 1 segundo
 	if(flag == 1){
 		ALTERNA_BIT(PORTB, PB4);
+		TCNT1 = 0;
 	}else{
 		LIMPA_BIT(PORTB, PB4);
 	}
 }
 ISR(ADC_vect){
 	adcValue = ADC;
-	Serial.println(adcValue);
 }
 void desliga(){//desliga o robô após ser atingido 3 vezes
 	cli();//desabilita interrupções globais
@@ -41,9 +41,12 @@ void giro(){//faz o robô girar 180 graus ao ser atingido e desativa por 5s ante
 	PORTB &= ~0x06;//desliga as rodas da esquerda
 	PORTD &= ~0x40;//desliga o bit PD6
 	PORTD |= _BV(PD7);//Gira pra direita
-	_delay_ms(1000);
+	TCCR1A = 0;
+	TCNT1 = 0;
+	while(TCNT1 <= 15625);
 	PORTD &= 0x0C;//cancela o giro
-	_delay_ms(4000);
+	while(TCNT1 <= 62500);
+	piscaLaser();
 	sei();//ativa as interrupções globais
 }
 void dano(){//Apaga um ods leds de vida sempre que for acertado no LDR
@@ -101,12 +104,12 @@ void re(){
 }
 void piscaLaser(){
 	TCCR1A = 0;
-	TCCR1A |= (1<<WGM12);//toggle CTC
+	TCCR1A |= _BV(WGM12);//CTC
 	TCCR1B = 0;
-	TCCR1B |= (1<<CS12);//prescaler 256
+	TCCR1B |= _BV(CS10) | _BV(CS12);//prescaler 1024
 	TIMSK1 = 0;
-	TIMSK1 |= (1<<OCIE1A);//ativa as interrupções do timer1
-	OCR1A = 62500;//valor que sera comparado 
+	TIMSK1 |= _BV(OCIE1A);//ativa as interrupções do timer1
+	OCR1A = 15625;//valor que sera comparado 
 	TCNT1 = 0;
 }
 
@@ -146,16 +149,11 @@ void leituraADC(){
 	}
 }
 int main(void){
-	//	    	 D12
 	DDRB |= _BV(PB4);//define o led atirador como saída
-	//		 D9		  D10		  D11
 	DDRB |= _BV(PB1) | _BV(PB2) | _BV(PB3);//define os bits Pb3~EnA, Pb2-In1, Pb1-In2 como saída
-	//		 D5		  D6		  D7
 	DDRD |= _BV(PD5) | _BV(PD6) | _BV(PD7);//define os bits Pd5~EnB, Pd6-In3, Pd7-In4 como saída
-	//		 D2		  D3		  D4
 	DDRD |= _BV(PD2) | _BV(PD3) | _BV(PD4);//define os Leds de vida como saída
-	//					    D16, D17, D18, D19
-	DDRC |= 0x00;//define os bits Pc0, Pc2-esquerda, Pc3-direita, Pc4-acelera, Pc5-ré como entrada
+	DDRC = 0x00;//define os bits Pc0, Pc2-esquerda, Pc3-direita, Pc4-acelera, Pc5-ré como entrada
 	PORTC |= _BV(PC2) | _BV(PC3) | _BV(PC4) | _BV(PC5);//ativa os resistores de pull-up do PORTC
 	flag = 1;
 	
@@ -165,8 +163,6 @@ int main(void){
 	enableA_PWM();
 	enableB_PWM();
 	sei();
-	
-	Serial.begin(9600);
 	
 	while(1){
 		while(flag == 1){
