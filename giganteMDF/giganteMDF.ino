@@ -71,7 +71,7 @@ void dano(){//Apaga um ods leds de vida sempre que for acertado no LDR
 void acelera(){
 	while(!(PINC & _BV(PC2))){//curva esquerda
 		leituraADC();
-		PORTB |= _BV(PB2) ;
+		PORTB |= _BV(PB1) ;
 	}
 	while(!(PINC & _BV(PC3))){//curva direita
 		leituraADC();
@@ -79,7 +79,7 @@ void acelera(){
 	}
 	while(LINHA_RETA_AC){//linha reta
 		leituraADC();
-		PORTB |= _BV(PB2);
+		PORTB |= _BV(PB1);
 		PORTD |= _BV(PD6);
 	}
 		PORTB &= ~0x06;
@@ -88,7 +88,7 @@ void acelera(){
 void re(){
 	while(!(PINC & _BV(PC2))){//curva esquerda
 		leituraADC();
-		PORTB |= _BV(PB1);
+		PORTB |= _BV(PB2);
 	}
 	while(!(PINC & _BV(PC3))){//curva direita
 		leituraADC();
@@ -96,7 +96,7 @@ void re(){
 	}
 	while(LINHA_RETA_RE){//linha reta
 		leituraADC();
-		PORTB |= _BV(PB1);
+		PORTB |= _BV(PB2);
 		PORTD |= _BV(PD7);
 	}
 		PORTB &= ~0x06;
