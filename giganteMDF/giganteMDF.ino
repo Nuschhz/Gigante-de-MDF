@@ -82,8 +82,10 @@ void acelera(){
 		PORTB |= _BV(PB1);
 		PORTD |= _BV(PD6);
 	}
-		PORTB &= ~0x06;
-		PORTD &= ~0xC0;
+  LIMPA_BIT(PORTB, PB1);
+  LIMPA_BIT(PORTB, PB2);
+  LIMPA_BIT(PORTD, PD6);
+  LIMPA_BIT(PORTD, PD7);
 }
 void re(){
 	while(!(PINC & _BV(PC2))){//curva esquerda
@@ -99,8 +101,10 @@ void re(){
 		PORTB |= _BV(PB2);
 		PORTD |= _BV(PD7);
 	}
-		PORTB &= ~0x06;
-		PORTD &= ~0xC0;
+  LIMPA_BIT(PORTB, PB1);
+  LIMPA_BIT(PORTB, PB2);
+  LIMPA_BIT(PORTD, PD6);
+  LIMPA_BIT(PORTD, PD7);
 }
 void piscaLaser(){
 	TCCR1A = 0;
@@ -127,14 +131,14 @@ void inicializaVidas(){
 }
 
 void enableA_PWM(){
-	OCR0B = 191;
+	OCR0B = 204;
 	TCCR0A = 0;
 	TCCR0A |= _BV(COM0B1) | _BV(WGM01)| _BV(WGM00);
 	TCCR0B = 0;
 	TCCR0B |= _BV(CS00);
 }
 void enableB_PWM(){
-	OCR2A = 191;
+	OCR2A = 204;
 	TCCR2A = 0;
 	TCCR2A |= _BV(COM2A1) | _BV(WGM21)| _BV(WGM20);
 	TCCR2B = 0;
@@ -142,26 +146,27 @@ void enableB_PWM(){
 }
 void leituraADC(){
 	ADCSRA |= _BV(ADSC);
-	while(!(ADCSRA & _BV(ADIF)));
+	while((ADCSRA & _BV(ADIF)));
 	ADCSRA |= _BV(ADIF);
-	if(adcValue >= 800){
+	if(adcValue <= 500){
 		dano();
 	}
 }
 int main(void){
-	DDRB |= _BV(PB4);//define o led atirador como saída
+	DDRB |= _BV(PB4);//define o laser atirador como saída
 	DDRB |= _BV(PB1) | _BV(PB2) | _BV(PB3);//define os bits Pb3~EnA, Pb2-In1, Pb1-In2 como saída
 	DDRD |= _BV(PD5) | _BV(PD6) | _BV(PD7);//define os bits Pd5~EnB, Pd6-In3, Pd7-In4 como saída
 	DDRD |= _BV(PD2) | _BV(PD3) | _BV(PD4);//define os Leds de vida como saída
 	DDRC = 0x00;//define os bits Pc0, Pc2-esquerda, Pc3-direita, Pc4-acelera, Pc5-ré como entrada
-	PORTC |= _BV(PC2) | _BV(PC3) | _BV(PC4) | _BV(PC5);//ativa os resistores de pull-up do PORTC
+	PORTC |= _BV(PC2) | _BV(PC3)| _BV(PC4) | _BV(PC5);//ativa os resistores de pull-up do PORTC
 	flag = 1;
-	
+
 	piscaLaser();
 	inicializaVidas();
 	inicializaAnalog();
 	enableA_PWM();
 	enableB_PWM();
+
 	sei();
 	
 	while(1){
