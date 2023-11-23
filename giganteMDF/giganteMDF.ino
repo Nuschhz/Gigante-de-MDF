@@ -1,6 +1,13 @@
+/**
+ * @file giganteMDF.ino
+ * @brief Gigante-De-MDF Main
+ * @author nusch05
+ * @details https://github.com/Nuschhz/Gigante-de-MDF
+ * @date 11-2023
+ */
 #define F_CPU 16000000UL;
-#include <avr/io.h>
-#include <avr/interrupt.h>
+#include <avr/io.h> /**< Exemplo de explicação de uma struct #a. */
+#include <avr/interrupt.h> /**< Exemplo de explicação de uma struct #a. */
 
 #define _BV(n) (1<<n)
 #define ALTERNA_BIT(PORT,BIT) PORT ^= (1<<BIT)
@@ -66,6 +73,8 @@ void dano(){//Apaga um ods leds de vida sempre que for acertado no LDR
 	}else if(vidasAtuais >= 0){
 		ALTERNA_BIT(PORTD,PD2);
 		LIMPA_BIT(PORTB, PB4);
+    giro();
+    desliga();
 	}
 }
 void acelera(){
@@ -152,6 +161,9 @@ void leituraADC(){
 		dano();
 	}
 }
+/**
+ *@brief main loop
+*/
 int main(void){
 	DDRB |= _BV(PB4);//define o laser atirador como saída
 	DDRB |= _BV(PB1) | _BV(PB2) | _BV(PB3);//define os bits Pb3~EnA, Pb2-In1, Pb1-In2 como saída
