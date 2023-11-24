@@ -236,6 +236,7 @@ void leituraADC(){
 	ADCSRA |= _BV(ADIF);
 	if(adcValue <= 400){
 		dano();
+    adcValue = 500;
 	}
 }
 /**
