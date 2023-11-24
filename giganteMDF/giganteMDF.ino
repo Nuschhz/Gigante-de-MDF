@@ -102,10 +102,10 @@ void giro(){
 /**
  *@brief Função que administra o dano recebido pelo Gigante de MDF.
  *
+ *Esta Função contabiliza os danos recebidos pelo Gigante.
+ *Para cada dano recebido, é alternado o BIT dos leds de vida para que estas sejam decrementadas e o laser do Gigante é desativado.
+ *Ao receber 3 danos, são executadas as funções de <b>giro</b> e <b>desliga</b>.
  *
- *
- * @code {.C}
- * @endcode
 */
 void dano(){
 	flag = 0;
@@ -131,22 +131,31 @@ void dano(){
 /**
  *@brief Função que faz o Gigante de MDF acelerar.
  *
- *
+ *Esta Função é responsável por acelerar os motores do Gigante.
+ *Cada <b>while()</b> faz com que o robô tome certa direção.
  *
  * @code {.C}
- * 
+ * while(!(PINC & _BV(PC2))){
+ * //curva para esquerda
+ * }
+ * while(!(PINC & _BV(PC3))){
+ * //curva para direita
+ * }
+ * while(LINHA_RETA_AC){
+ * //segue em linha reta para frente
+ * }
  * @endcode
 */
 void acelera(){
-	while(!(PINC & _BV(PC2))){//curva esquerda
+	while(!(PINC & _BV(PC2))){
 		leituraADC();
 		PORTD |= _BV(PD6);
 	}
-	while(!(PINC & _BV(PC3))){//curva direita
+	while(!(PINC & _BV(PC3))){
 		leituraADC();
     PORTB |= _BV(PB2);
 	}
-	while(LINHA_RETA_AC){//linha reta
+	while(LINHA_RETA_AC){
 		leituraADC();
 		PORTB |= _BV(PB2);
 		PORTD |= _BV(PD6);
@@ -159,21 +168,31 @@ void acelera(){
 /**
  *@brief Função que faz o Gigante de MDF dar ré.
  *
+ *Esta Função é responsável por acelerar os motores do Gigante.
+ *Cada <b>while()</b> faz com que o robô tome certa direção.
  *
  * @code {.C}
- * 
+ * while(!(PINC & _BV(PC2))){
+ * //curva para esquerda
+ * }
+ * while(!(PINC & _BV(PC3))){
+ * //curva para direita
+ * }
+ * while(LINHA_RETA_RE){
+ * //segue em linha reta para trás
+ * }
  * @endcode
 */
 void re(){
-	while(!(PINC & _BV(PC2))){//curva esquerda
+	while(!(PINC & _BV(PC2))){
 		leituraADC();
     PORTD |= _BV(PD7);
 	}
-	while(!(PINC & _BV(PC3))){//curva direita
+	while(!(PINC & _BV(PC3))){
 		leituraADC();
     PORTB |= _BV(PB1);
 	}
-	while(LINHA_RETA_RE){//linha reta
+	while(LINHA_RETA_RE){
 		leituraADC();
 		PORTB |= _BV(PB1);
 		PORTD |= _BV(PD7);
@@ -186,11 +205,8 @@ void re(){
 /**
  *@brief Função que inicia o laser do Gigante de MDF.
  *
+ *Esta Função configura a utilização do <b>Timer1</b> para operação do laser atirador.
  *
- *
- * @code {.C}
- * 
- * @endcode
 */
 void piscaLaser(){
 	TCCR1A = 0;
@@ -203,13 +219,10 @@ void piscaLaser(){
 	TCNT1 = 0;
 }
 /**
- *@brief Função que Gigante de MDF.
+ *@brief Função que inicializa o ADC.
  *
+ *Esta Função inicializa o conversor analógico digital para o LDR na porta A0.
  *
- *
- * @code {.C}
- * 
- * @endcode
 */
 void inicializaAnalog(){
 	ADMUX = 0;
@@ -219,12 +232,15 @@ void inicializaAnalog(){
 	ADCSRA |= _BV(ADEN) | _BV(ADPS2) | _BV(ADPS0) | _BV(ADIE);
 }
 /**
- *@brief Função que Gigante de MDF.
+ *@brief Função que inicializa os leds representativos de vida do Gigante.
  *
- *
+ *Esta Função atribui as variáveis <b>vidasTotais</b> e <b>danoRecebido</b> seus respectivos valores iniciais.
+ *Por fim, acende os leds de vida.
  *
  * @code {.C}
- * 
+ * vidasTotais = 3;
+ * danoRecebido = 0;
+ * //...
  * @endcode
 */
 void inicializaVidas(){
@@ -233,13 +249,10 @@ void inicializaVidas(){
 	PORTD |= _BV(PD2) | _BV(PD3) | _BV(PD4);
 }
 /**
- *@brief Função que Gigante de MDF.
+ *@brief Função que habilita o motor esquerdo do Gigante.
  *
+ *Esta Função configura o <b>Timer0</b> para o modo PWM para 75%.
  *
- *
- * @code {.C}
- * 
- * @endcode
 */
 void enableA_PWM(){
 	OCR0B = 191;
@@ -249,13 +262,10 @@ void enableA_PWM(){
 	TCCR0B |= _BV(CS00);
 }
 /**
- *@brief Função que Gigante de MDF.
+ *@brief Função que habilita o motor direito do Gigante.
  *
+ *Esta Função configura o <b>Timer2</b> para o modo PWM para 75%.
  *
- *
- * @code {.C}
- * 
- * @endcode
 */
 void enableB_PWM(){
 	OCR2A = 191;
@@ -265,12 +275,15 @@ void enableB_PWM(){
 	TCCR2B |= _BV(CS20);
 }
 /**
- *@brief Função que Gigante de MDF.
+ *@brief Função que realiza a leitura do valor de entrada recebido pelo LDR.
  *
- *
- *
- * @code {.C}
+ *Esta Função ativa o BIT de conversão no registrador <b>ADCSRA<b/> e espera a conversão finalizar dentro de um <b>while()</b>.
+ *A condição do bloco <b>if()</b> verifica se o robô foi atingido pelo laser adversário. 
  * 
+ * @code {.C}
+ * ADCSRA |= _BV(ADSC);//inicializa a conversão AD.
+ * while((ADCSRA & _BV(ADIF)));//espera o fim da conversão.
+ * //...
  * @endcode
 */
 void leituraADC(){
@@ -283,22 +296,16 @@ void leituraADC(){
 	}
 }
 /**
- *@brief Função que Gigante de MDF.
- *
- *
- *
- * @code {.C}
- * 
- * @endcode
+ *@brief Setup e loop do Gigante de MDF.
 */
 int main(void){
-	DDRB |= _BV(PB4);//define o laser atirador como saída
-	DDRB |= _BV(PB1) | _BV(PB2) | _BV(PB3);//define os bits Pb3~EnA, Pb2-In1, Pb1-In2 como saída
-	DDRD |= _BV(PD5) | _BV(PD6) | _BV(PD7);//define os bits Pd5~EnB, Pd6-In3, Pd7-In4 como saída
-	DDRD |= _BV(PD2) | _BV(PD3) | _BV(PD4);//define os Leds de vida como saída
-	DDRC = 0x00;//define os bits Pc0, Pc2-esquerda, Pc3-direita, Pc4-acelera, Pc5-ré como entrada
+	DDRB |= _BV(PB4);
+	DDRB |= _BV(PB1) | _BV(PB2) | _BV(PB3);
+	DDRD |= _BV(PD5) | _BV(PD6) | _BV(PD7);
+	DDRD |= _BV(PD2) | _BV(PD3) | _BV(PD4);
+	DDRC = 0x00;
   DDRC |= _BV(PC6);
-	PORTC |= _BV(PC2) | _BV(PC3)| _BV(PC4) | _BV(PC5);//ativa os resistores de pull-up do PORTC
+	PORTC |= _BV(PC2) | _BV(PC3)| _BV(PC4) | _BV(PC5);
 	flag = 1;
 
 	piscaLaser();
