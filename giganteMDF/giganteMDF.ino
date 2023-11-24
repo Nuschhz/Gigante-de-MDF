@@ -1,32 +1,42 @@
 /**
  * @file giganteMDF.ino
  * @brief Gigante-De-MDF Main
- * @author nusch05
+ * @author Gustavo Lucio | Gustavo Nusch | Lucas Faria | Rafaela Pinheiro
  * @details https://github.com/Nuschhz/Gigante-de-MDF
- * @date 11-2023
+ * @date 23-11-2023
  */
-#define F_CPU 16000000UL;
-#include <avr/io.h> /**< Exemplo de explicação de uma struct #a. */
-#include <avr/interrupt.h> /**< Exemplo de explicação de uma struct #a. */
 
+/**
+ *@brief definição da CPU e bibliotecas utilizadas.
+*/
+#define F_CPU 16000000UL;
+#include <avr/io.h>
+#include <avr/interrupt.h>
+
+/**
+ *@brief definição de macros.
+*/
 #define _BV(n) (1<<n)
 #define ALTERNA_BIT(PORT,BIT) PORT ^= (1<<BIT)
 #define LIMPA_BIT(PORT, BIT) PORT &= ~(1<<BIT)
 
 #define LINHA_RETA_AC_1 (!(PINC & _BV(PC4)) && (PINC & _BV(PC2)) && (PINC & _BV(PC3)))
 #define LINHA_RETA_AC_2 (!(PINC & _BV(PC4)) && !(PINC & _BV(PC2)) && !(PINC & _BV(PC3)))
-#define LINHA_RETA_AC LINHA_RETA_AC_1 || LINHA_RETA_AC_2
+#define LINHA_RETA_AC LINHA_RETA_AC_1 || LINHA_RETA_AC_2/**< Definição da condição para linha reta durante a aceleração caso dois botões, ou nenhum, estejam pressionados.*/
 
 #define LINHA_RETA_RE_1 (!(PINC & _BV(PC5)) && (PINC & _BV(PC2)) && (PINC & _BV(PC3)))
 #define LINHA_RETA_RE_2 (!(PINC & _BV(PC5)) && !(PINC & _BV(PC2)) && !(PINC & _BV(PC3)))
-#define LINHA_RETA_RE LINHA_RETA_RE_1 || LINHA_RETA_RE_2
+#define LINHA_RETA_RE LINHA_RETA_RE_1 || LINHA_RETA_RE_2/**< Definição da condição para linha reta durante a ré caso dois botões, ou nenhum, estejam pressionados.*/
 
-uint16_t adcValue;
-volatile uint8_t danoRecebido;
-volatile uint8_t vidasTotais;
-char flag;
+uint16_t adcValue = 500;/**< Variável de comparação ADC inicializada em 500 para evitar que um dano seja tomado na primeira chamada.*/
+volatile uint8_t danoRecebido;/**< Variável correspondente ao dano recebido pelo Gigante de MDF.*/
+volatile uint8_t vidasTotais;/**< Váriavel responsável pelas vidas máximas do Gigante de MDF.*/
+char flag;/**< Variável que controla se o Gigante está funcionando ou não.*/
 
-ISR(TIMER1_COMPA_vect){//alterna laser de 1 em 1 segundo
+/**
+ *@brief .
+*/
+ISR(TIMER1_COMPA_vect){
 	if(flag == 1){
 		ALTERNA_BIT(PORTB, PB4);
 		TCNT1 = 0;
@@ -34,9 +44,17 @@ ISR(TIMER1_COMPA_vect){//alterna laser de 1 em 1 segundo
 		LIMPA_BIT(PORTB, PB4);
 	}
 }
+
+/**
+ *@brief definição de macros.
+*/
 ISR(ADC_vect){
 	adcValue = ADC;
 }
+
+/**
+ *@brief definição de macros.
+*/
 void desliga(){//desliga o robô após ser atingido 3 vezes
 	cli();//desabilita interrupções globais
 	adcValue = 0;
@@ -44,18 +62,26 @@ void desliga(){//desliga o robô após ser atingido 3 vezes
 	PORTD |= 0;//desliga as portas no PORTD
 	flag = 0;//desabilita a flag de funcionamento
 }
+
+/**
+ *@brief definição de macros.
+*/
 void giro(){//faz o robô girar 180 graus ao ser atingido e desativa por 5s antes que possa ser utilizado
 	PORTB &= ~0x06;//desliga as rodas da esquerda
 	PORTD &= ~0x40;//desliga o bit PD6
 	PORTD |= _BV(PD7);//Gira pra direita
 	TCCR1A = 0;
 	TCNT1 = 0;
-	while(TCNT1 <= 15625);
+	while(TCNT1 <= 23438);
 	PORTD &= 0x0C;//cancela o giro
-	while(TCNT1 <= 62500);
+	while(TCNT1 <= 54687);
 	piscaLaser();
 	sei();//ativa as interrupções globais
 }
+
+/**
+ *@brief definição de macros.
+*/
 void dano(){//Apaga um ods leds de vida sempre que for acertado no LDR
 	flag = 0;//desabilita a flag de ativação do circuito
 	danoRecebido++;//incrementa a variável de dano recebido
@@ -77,18 +103,22 @@ void dano(){//Apaga um ods leds de vida sempre que for acertado no LDR
     desliga();
 	}
 }
+
+/**
+ *@brief definição de macros.
+*/
 void acelera(){
 	while(!(PINC & _BV(PC2))){//curva esquerda
 		leituraADC();
-		PORTB |= _BV(PB1) ;
+		PORTD |= _BV(PD6);
 	}
 	while(!(PINC & _BV(PC3))){//curva direita
 		leituraADC();
-		PORTD |= _BV(PD6);
+    PORTB |= _BV(PB2);
 	}
 	while(LINHA_RETA_AC){//linha reta
 		leituraADC();
-		PORTB |= _BV(PB1);
+		PORTB |= _BV(PB2);
 		PORTD |= _BV(PD6);
 	}
   LIMPA_BIT(PORTB, PB1);
@@ -96,18 +126,43 @@ void acelera(){
   LIMPA_BIT(PORTD, PD6);
   LIMPA_BIT(PORTD, PD7);
 }
+
+/**
+ *@brief Função que faz o Gigante dar Ré.
+ * @code
+ * void re(){
+ *	while(!(PINC & _BV(PC2))){//curva esquerda
+ *	leituraADC();
+ *  PORTB |= _BV(PB1);
+ *}
+ while(!(PINC & _BV(PC3))){//curva direita
+ *	leituraADC();
+ *  PORTD |= _BV(PD7);
+ *}
+ while(LINHA_RETA_RE){//linha reta
+ *	leituraADC();
+ *	PORTB |= _BV(PB1);
+ *	PORTD |= _BV(PD7);
+ *}
+ LIMPA_BIT(PORTB, PB1);
+ LIMPA_BIT(PORTB, PB2);
+ LIMPA_BIT(PORTD, PD6);
+ LIMPA_BIT(PORTD, PD7);
+ *}
+ * @endcode
+*/
 void re(){
 	while(!(PINC & _BV(PC2))){//curva esquerda
 		leituraADC();
-		PORTB |= _BV(PB2);
+    PORTB |= _BV(PB1);
 	}
 	while(!(PINC & _BV(PC3))){//curva direita
 		leituraADC();
-		PORTD |= _BV(PD7);
+    PORTD |= _BV(PD7);
 	}
 	while(LINHA_RETA_RE){//linha reta
 		leituraADC();
-		PORTB |= _BV(PB2);
+		PORTB |= _BV(PB1);
 		PORTD |= _BV(PD7);
 	}
   LIMPA_BIT(PORTB, PB1);
@@ -115,6 +170,10 @@ void re(){
   LIMPA_BIT(PORTD, PD6);
   LIMPA_BIT(PORTD, PD7);
 }
+
+/**
+ *@brief definição de macros.
+*/
 void piscaLaser(){
 	TCCR1A = 0;
 	TCCR1A |= _BV(WGM12);//CTC
@@ -126,6 +185,9 @@ void piscaLaser(){
 	TCNT1 = 0;
 }
 
+/**
+ *@brief definição de macros.
+*/
 void inicializaAnalog(){
 	ADMUX = 0;
 	ADMUX |= _BV(REFS0);
@@ -133,31 +195,46 @@ void inicializaAnalog(){
 	ADCSRA = 0;
 	ADCSRA |= _BV(ADEN) | _BV(ADPS2) | _BV(ADPS0) | _BV(ADIE);
 }
+
+/**
+ *@brief definição de macros.
+*/
 void inicializaVidas(){
 	vidasTotais = 3;
 	danoRecebido = 0;
 	PORTD |= _BV(PD2) | _BV(PD3) | _BV(PD4);
 }
 
+/**
+ *@brief definição de macros.
+*/
 void enableA_PWM(){
-	OCR0B = 204;
+	OCR0B = 191;
 	TCCR0A = 0;
 	TCCR0A |= _BV(COM0B1) | _BV(WGM01)| _BV(WGM00);
 	TCCR0B = 0;
 	TCCR0B |= _BV(CS00);
 }
+
+/**
+ *@brief definição de macros.
+*/
 void enableB_PWM(){
-	OCR2A = 204;
+	OCR2A = 191;
 	TCCR2A = 0;
 	TCCR2A |= _BV(COM2A1) | _BV(WGM21)| _BV(WGM20);
 	TCCR2B = 0;
 	TCCR2B |= _BV(CS20);
 }
+
+/**
+ *@brief definição de macros.
+*/
 void leituraADC(){
 	ADCSRA |= _BV(ADSC);
 	while((ADCSRA & _BV(ADIF)));
 	ADCSRA |= _BV(ADIF);
-	if(adcValue <= 500){
+	if(adcValue <= 400){
 		dano();
 	}
 }
@@ -192,5 +269,4 @@ int main(void){
 			}
 		}
 	}
-	
 }
