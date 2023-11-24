@@ -21,21 +21,21 @@ A proposta do projeto consiste em uma competição entre os robôs de cada grupo
 
 |   Componentes   | Quantidade |
 |:---------------:|:----------:|
+| Arduino NANO    |     x1     |
+| Bateria 9V      |     x1     |
 | Borne           |     x13    |
 | Botão           |     x1     |
-| Arduino NANO    |     x1     |
-| LM7805          |     x1     |
-| Laser 5mW       |     x1     |
 | Capacitor 100nF |     x2     |
 | Capacitor 100uF |     x2     |
 | Chave           |     x5     |
-| Motor DC        |     x2     |
-| L293D           |     x1     |
-| Resistor 10K    |     x5     |
-| Resistor 220    |     x4     |
-| Bateria 9V      |     x1     |
-| Resistor 1K     |     x1     |
 | Clip Bateria    |     x1     |
+| Laser 5mW       |     x1     |
+| LM7805          |     x1     |
+| L293D           |     x1     |
+| Motor DC        |     x2     |
+| Resistor 220    |     x4     |
+| Resistor 1K     |     x1     |
+| Resistor 10K    |     x5     |
 
 ![Esquemático Gigante de MDF](assets/esquematico.jpg)
 
