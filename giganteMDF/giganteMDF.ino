@@ -85,7 +85,7 @@ void desliga(){
  * @endcode
 */
 void giro(){
-	PORTB &= ~0x02
+	PORTB &= ~0x02;
 	PORTD &= ~0x40;
   PORTB |= _BV(PB2);
 	PORTD |= _BV(PD7);
